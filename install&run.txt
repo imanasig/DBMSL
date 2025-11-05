@@ -1,0 +1,32 @@
+🧩 1️⃣ INSTALLATION SETUP — MySQL on Ubuntu
+
+🔹 Step 1: Update your system
+sudo apt update
+sudo apt upgrade -y
+🔹 Step 2: Install MySQL Server
+sudo apt install mysql-server -y
+🔹 Step 3: Start MySQL Service
+sudo systemctl start mysql
+🔹 Step 4: Enable it to start on boot
+sudo systemctl enable mysql
+🔹 Step 5: Check if it’s running
+sudo systemctl status mysql
+👉 If you see “active (running)”, you’re good.
+
+3️⃣ LOGGING INTO MYSQL SHELL
+Once installed, login with root:
+sudo mysql -u root -p
+Then type your password (you set in the previous step).
+If successful, you’ll see a prompt like:
+mysql>
+✅ That means you’re inside the MySQL shell and ready to run SQL commands.
+
+4️⃣ RUNNING YOUR SQL SCRIPT
+Option 1: Copy–paste commands manually
+Each line ends with a semicolon (;).
+
+Option 2: Save your file and execute it directly
+If you saved your SQL file as lab_exam.sql in your home directory, you can execute all queries automatically like this:
+sudo mysql -u root -p < ~/lab_exam.sql
+💡 This will run every command in that file sequentially and print the outputs directly in your terminal.
+
