@@ -1,0 +1,198 @@
+Assignment 2 Group A SQL Queries:
+a. Design and Develop SQL DDL statements which demonstrate the use of SQL objects such as Table, View, Index, Sequence, Synonym, different constraints etc.
+b. Write at least 10 SQL queries on the suitable database application using SQL DML statements.
+Note: Instructor will design the queries which demonstrate the use of concepts like Insert, Select, Update, Delete with operators, functions, and set operator etc.
+
+| Case Study | Replace “Student” with | Replace “Course” with | Replace “Enrollment” with |
+| ---------- | ---------------------- | --------------------- | ------------------------- |
+| Library    | Book                   | Member                | Issue                     |
+| Hospital   | Patient                | Doctor                | Appointment               |
+| Company    | Employee               | Project               | Assignment                |
+| Shop       | Customer               | Product               | Order                     |
+
+/* ==========================================
+   DBMS LAB – UNIVERSAL SQL SCRIPT Demonstrates: DDL, DML, Constraints, Views, Index, Sequence, Synonym, Functions, Operators
+   ========================================== */
+
+/* ==========
+   PART A: DDL STATEMENTS
+   ========== */
+
+/* 1. Create a base table */
+CREATE TABLE Student (
+    student_id      NUMBER PRIMARY KEY,
+    first_name      VARCHAR(50) NOT NULL,
+    last_name       VARCHAR(50),
+    date_of_birth   DATE CHECK (date_of_birth < SYSDATE),
+    department      VARCHAR(30),
+    email           VARCHAR(100) UNIQUE,
+    marks           NUMBER(5,2),
+    grade           CHAR(2)
+);
+
+/* 2. Create another table for relationship (example: Courses) */
+CREATE TABLE Course (
+    course_id       NUMBER PRIMARY KEY,
+    course_name     VARCHAR(50) NOT NULL,
+    credits         NUMBER CHECK (credits > 0)
+);
+
+/* 3. Create a junction table (Many-to-Many relationship) */
+CREATE TABLE Enrollment (
+    enroll_id       NUMBER PRIMARY KEY,
+    student_id      NUMBER REFERENCES Student(student_id) ON DELETE CASCADE,
+    course_id       NUMBER REFERENCES Course(course_id),
+    enroll_date     DATE DEFAULT SYSDATE
+);
+
+/* 4. Create an INDEX on student name for faster search */
+CREATE INDEX idx_student_name ON Student(first_name, last_name);
+
+/* 5. Create a VIEW to see only high scoring students */
+CREATE VIEW High_Scorers AS
+SELECT student_id, first_name, last_name, marks, grade
+FROM Student
+WHERE marks > 80;
+
+/* 6. Create a SEQUENCE for auto-generating student IDs */
+CREATE SEQUENCE seq_student_id
+START WITH 1
+INCREMENT BY 1
+NOCACHE;
+
+/* 7. Create a SYNONYM (if supported by DBMS like Oracle) */
+CREATE SYNONYM stud FOR Student;
+
+/* ==========
+   PART B: DML QUERIES
+   ========== */
+
+/* 1. Insert sample records */
+INSERT INTO Student VALUES (seq_student_id.NEXTVAL, 'Amit', 'Sharma', TO_DATE('2003-05-21', 'YYYY-MM-DD'), 'CSE', 'amit@gmail.com', 89.5, 'A');
+INSERT INTO Student VALUES (seq_student_id.NEXTVAL, 'Riya', 'Patil', TO_DATE('2004-02-13', 'YYYY-MM-DD'), 'IT', 'riya@gmail.com', 76.0, 'B');
+INSERT INTO Student VALUES (seq_student_id.NEXTVAL, 'John', 'Doe', TO_DATE('2002-08-10', 'YYYY-MM-DD'), 'ECE', 'john@gmail.com', 91.0, 'A');
+
+INSERT INTO Course VALUES (101, 'Database Systems', 4);
+INSERT INTO Course VALUES (102, 'Operating Systems', 3);
+INSERT INTO Course VALUES (103, 'AI Fundamentals', 4);
+
+INSERT INTO Enrollment VALUES (1, 1, 101, SYSDATE);
+INSERT INTO Enrollment VALUES (2, 2, 103, SYSDATE);
+
+/* 2. Update statement */
+UPDATE Student
+SET marks = marks + 5
+WHERE department = 'CSE';
+SELECT * FROM Student;
+
+/* 3. Delete statement */
+DELETE FROM Student
+WHERE marks < 50;
+
+/* 4. Simple SELECT */
+SELECT * FROM Student;
+
+/* 5. SELECT with WHERE and ORDER BY */
+SELECT first_name, department, marks
+FROM Student
+WHERE marks > 70
+ORDER BY marks DESC;
+
+/* 6. SELECT with aggregate functions */
+SELECT department, AVG(marks) AS avg_marks
+FROM Student
+GROUP BY department
+HAVING AVG(marks) > 75;
+
+/* 7. SELECT using BETWEEN and LIKE */
+SELECT first_name, marks
+FROM Student
+WHERE marks BETWEEN 70 AND 90
+  AND first_name LIKE 'A%';
+
+/* 8. Use of DISTINCT and IN operator */
+SELECT DISTINCT department
+FROM Student
+WHERE department IN ('CSE', 'IT');
+
+/* 9. Demonstrate Set Operators (UNION, INTERSECT, MINUS) */
+SELECT student_id FROM Student
+UNION
+SELECT student_id FROM Enrollment;
+
+SELECT student_id FROM Student
+INTERSECT
+SELECT student_id FROM Enrollment;
+
+/* 10. Use of Subquery */
+SELECT first_name, marks
+FROM Student
+WHERE marks > (SELECT AVG(marks) FROM Student);
+
+/* ==========
+   PART C: OPTIONAL ADDITIONS
+   ========== */
+
+/* Display view data */
+SELECT * FROM High_Scorers;
+
+* ==========
+   PART D: JOINS
+   ========== */
+
+/* INNER JOIN */
+SELECT s.first_name, s.department, c.course_name
+FROM Student s
+INNER JOIN Enrollment e ON s.student_id = e.student_id
+INNER JOIN Course c ON e.course_id = c.course_id;
+
+/* LEFT JOIN */
+SELECT s.first_name, c.course_name
+FROM Student s
+LEFT JOIN Enrollment e ON s.student_id = e.student_id
+LEFT JOIN Course c ON e.course_id = c.course_id;
+
+/* ==========
+   PART E: VIEW & FUNCTIONS
+   ========== */
+
+/* Create a VIEW */
+CREATE OR REPLACE VIEW High_Scorers AS
+SELECT student_id, first_name, department, marks
+FROM Student
+WHERE marks > 80;
+
+SELECT * FROM High_Scorers;
+
+/* String & Numeric Functions */
+SELECT
+    UPPER(first_name) AS Name_Upper,
+    CONCAT(first_name, ' ', last_name) AS Full_Name,
+    ROUND(marks, 0) AS Rounded_Marks,
+    LENGTH(first_name) AS Name_Length
+FROM Student;
+
+/* CASE WHEN (conditional logic) */
+SELECT first_name, marks,
+    CASE
+        WHEN marks >= 85 THEN 'Excellent'
+        WHEN marks BETWEEN 70 AND 84 THEN 'Good'
+        ELSE 'Needs Improvement'
+    END AS Performance
+FROM Student;
+
+/* ==========
+   PART F: SET OPERATORS (simulate using UNION)
+   ========== */
+
+SELECT student_id FROM Enrollment
+UNION
+SELECT student_id FROM Student;
+
+/* Drop objects (cleanup) */
+-- DROP VIEW High_Scorers;
+-- DROP TABLE Enrollment;
+-- DROP TABLE Course;
+-- DROP TABLE Student;
+-- DROP SEQUENCE seq_student_id;
+-- DROP SYNONYM stud;
