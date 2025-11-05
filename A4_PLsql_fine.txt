@@ -1,0 +1,113 @@
+Unnamed PL/SQL code block: Use of Control structure and Exception handling ismandatory.
+Suggested Problem statement:
+Consider Tables:
+1. Borrower(Roll_no, Name, DateofIssue, NameofBook, Status)
+2. Fine(Roll_no,Date,Amt)
+ Accept Roll_no and NameofBook from user.
+ Check the number of days (from date of issue).
+ If days are between 15 to 30 then fine amount will be Rs 5per day.
+ If no. of days>30, per day fine will be Rs 50 per day and for days less than 30, Rs. 5 per day.
+ After submitting the book, status will change from I to R.
+ If condition of fine is true, then details will be stored into fine table.
+ Also handles the exception by named exception handler or user define exception handler
+
+BEGIN
+  EXECUTE IMMEDIATE 'DROP TABLE Fine';
+  EXECUTE IMMEDIATE 'DROP TABLE Borrower';
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END;
+/
+
+-- Create tables
+CREATE TABLE Borrower (
+  Roll_no     NUMBER(5),
+  Name        VARCHAR2(50),
+  DateOfIssue DATE,
+  NameOfBook  VARCHAR2(100),
+  Status      CHAR(1)
+);
+
+CREATE TABLE Fine (
+  Roll_no NUMBER(5),
+  NameOfBook VARCHAR2(100),
+  Date_   DATE,
+  Amt     NUMBER(10)
+);
+
+-- Sample data: some returned, some still issued
+INSERT INTO Borrower VALUES (101, 'Manasi', TO_DATE('10-OCT-2025','DD-MON-YYYY'), 'Database Systems', 'I');
+INSERT INTO Borrower VALUES (102, 'Riya',   TO_DATE('15-OCT-2025','DD-MON-YYYY'), 'Operating Systems', 'R');
+INSERT INTO Borrower VALUES (103, 'Aarav',  TO_DATE('01-OCT-2025','DD-MON-YYYY'), 'Computer Networks', 'I');
+INSERT INTO Borrower VALUES (104, 'Neha',   TO_DATE('25-SEP-2025','DD-MON-YYYY'), 'AI and ML', 'R');
+COMMIT;
+
+SET SERVEROUTPUT ON;
+DECLARE
+  v_days NUMBER;
+  v_amt  NUMBER;
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('Calculating fines for all borrowers...');
+  DBMS_OUTPUT.PUT_LINE('---------------------------------------');
+
+  FOR rec IN (SELECT * FROM Borrower) LOOP
+    v_days := TRUNC(SYSDATE) - TRUNC(rec.DateOfIssue);
+
+    -- Fine calculation logic
+    IF v_days BETWEEN 15 AND 30 THEN
+      v_amt := v_days * 5;
+    ELSIF v_days > 30 THEN
+      v_amt := v_days * 50;
+    ELSE
+      v_amt := 0;
+    END IF;
+
+    -- Insert fine (whether book is returned or still issued)
+    INSERT INTO Fine VALUES (rec.Roll_no, rec.NameOfBook, TRUNC(SYSDATE), v_amt);
+
+    DBMS_OUTPUT.PUT_LINE(
+      'Roll No: ' || rec.Roll_no ||
+      ' | Book: ' || rec.NameOfBook ||
+      ' | Days: ' || v_days ||
+      ' | Status: ' || rec.Status ||
+      ' | Fine: Rs ' || v_amt
+    );
+  END LOOP;
+
+  COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('❌ Error: ' || SQLERRM);
+END;
+/
+
+-- Display Borrower and Fine tables in formatted form
+BEGIN
+  DBMS_OUTPUT.PUT_LINE(CHR(10) || '--- Final Borrower Table ---');
+  DBMS_OUTPUT.PUT_LINE('Roll_no | Name | DateOfIssue | NameOfBook | Status');
+  DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------');
+  FOR rec IN (SELECT * FROM Borrower ORDER BY Roll_no) LOOP
+    DBMS_OUTPUT.PUT_LINE(
+      rec.Roll_no || ' | ' ||
+      RPAD(rec.Name,10) || ' | ' ||
+      TO_CHAR(rec.DateOfIssue, 'DD-MON-YYYY') || ' | ' ||
+      RPAD(rec.NameOfBook,20) || ' | ' ||
+      rec.Status
+    );
+  END LOOP;
+
+  DBMS_OUTPUT.PUT_LINE(CHR(10) || '--- Fine Table (All Books) ---');
+  DBMS_OUTPUT.PUT_LINE('Roll_no | NameOfBook | Date | Amt');
+  DBMS_OUTPUT.PUT_LINE('-----------------------------------------------');
+  FOR rec IN (SELECT * FROM Fine ORDER BY Roll_no) LOOP
+    DBMS_OUTPUT.PUT_LINE(
+      rec.Roll_no || ' | ' ||
+      RPAD(rec.NameOfBook,20) || ' | ' ||
+      TO_CHAR(rec.Date_, 'DD-MON-YYYY') || ' | Rs ' || rec.Amt
+    );
+  END LOOP;
+
+  DBMS_OUTPUT.PUT_LINE(CHR(10) || 'Status Legend: I = Issued,  R = Returned');
+END;
+/
