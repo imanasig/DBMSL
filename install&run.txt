@@ -30,3 +30,8 @@ If you saved your SQL file as lab_exam.sql in your home directory, you can execu
 sudo mysql -u root -p < ~/lab_exam.sql
 💡 This will run every command in that file sequentially and print the outputs directly in your terminal.
 
+🧩 PL/SQL Online Compiler — on Ubuntu
+https://onecompiler.com/plsql
+
+
+
