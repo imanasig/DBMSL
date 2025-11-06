@@ -1,0 +1,140 @@
+-- Part B: DML & Queries - Fully Independent
+
+-- 1. Drop old database for fresh start
+DROP DATABASE IF EXISTS college;
+CREATE DATABASE college;
+USE college;
+
+-- 2. Create Student table
+CREATE TABLE Student (
+    student_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50),
+    date_of_birth DATE,
+    department VARCHAR(30),
+    email VARCHAR(100) UNIQUE,
+    marks DECIMAL(5,2),
+    grade CHAR(2)
+);
+
+-- 3. Create Course table
+CREATE TABLE Course (
+    course_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_name VARCHAR(50) NOT NULL,
+    credits INT
+);
+
+-- 4. Create Enrollment table
+CREATE TABLE Enrollment (
+    enroll_id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT,
+    course_id INT,
+    enroll_date DATE DEFAULT (CURDATE()),
+    FOREIGN KEY (student_id) REFERENCES Student(student_id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES Course(course_id)
+);
+
+-- 5. Insert sample data into Student
+INSERT INTO Student (first_name, last_name, date_of_birth, department, email, marks, grade)
+VALUES 
+('Amit', 'Sharma', '2003-05-21', 'CSE', 'amit@gmail.com', 89.5, 'A'),
+('Riya', 'Patil', '2004-02-13', 'IT', 'riya@gmail.com', 76.0, 'B'),
+('John', 'Doe', '2002-08-10', 'ECE', 'john@gmail.com', 91.0, 'A'),
+('Sara', 'Singh', '2003-11-05', 'CSE', 'sara@gmail.com', 65.0, 'C');
+
+-- 6. Insert sample data into Course
+INSERT INTO Course (course_name, credits)
+VALUES 
+('Database Systems', 4),
+('Operating Systems', 3),
+('AI Fundamentals', 4),
+('Networking', 3);
+
+-- 7. Insert sample data into Enrollment
+INSERT INTO Enrollment (student_id, course_id, enroll_date)
+VALUES
+(1, 1, CURDATE()),
+(1, 2, CURDATE()),
+(2, 3, CURDATE()),
+(3, 4, CURDATE()),
+(4, 1, CURDATE());
+
+-- 8. Show tables and initial data
+SHOW TABLES;
+SELECT * FROM Student;
+SELECT * FROM Course;
+SELECT * FROM Enrollment;
+
+-- 9. UPDATE Example
+UPDATE Student
+SET marks = marks + 5
+WHERE department = 'CSE';
+SELECT * FROM Student;
+
+-- 10. DELETE Example
+DELETE FROM Student
+WHERE marks < 50;
+SELECT * FROM Student;
+
+-- 11. Simple SELECT queries
+SELECT first_name, department, marks
+FROM Student
+WHERE marks > 70
+ORDER BY marks DESC;
+
+-- 12. Aggregate Function Example
+SELECT department, AVG(marks) AS avg_marks
+FROM Student
+GROUP BY department
+HAVING AVG(marks) > 75;
+
+-- 13. BETWEEN and LIKE Example
+SELECT first_name, marks
+FROM Student
+WHERE marks BETWEEN 70 AND 90
+  AND first_name LIKE 'A%';
+
+-- 14. DISTINCT and IN Operator Example
+SELECT DISTINCT department
+FROM Student
+WHERE department IN ('CSE', 'IT');
+
+-- 15. INNER JOIN Example
+SELECT s.first_name, s.department, c.course_name
+FROM Student s
+INNER JOIN Enrollment e ON s.student_id = e.student_id
+INNER JOIN Course c ON e.course_id = c.course_id;
+
+-- 16. LEFT JOIN Example
+SELECT s.first_name, c.course_name
+FROM Student s
+LEFT JOIN Enrollment e ON s.student_id = e.student_id
+LEFT JOIN Course c ON e.course_id = c.course_id;
+
+-- 17. Subquery Example
+SELECT first_name, marks
+FROM Student
+WHERE marks > (SELECT AVG(marks) FROM Student);
+
+-- 18. CASE WHEN Example
+SELECT first_name, marks,
+    CASE
+        WHEN marks >= 85 THEN 'Excellent'
+        WHEN marks BETWEEN 70 AND 84 THEN 'Good'
+        ELSE 'Needs Improvement'
+    END AS Performance
+FROM Student;
+
+-- 19. String & Numeric Functions Example
+SELECT
+    UPPER(first_name) AS Name_Upper,
+    CONCAT(first_name, ' ', last_name) AS Full_Name,
+    ROUND(marks, 0) AS Rounded_Marks,
+    LENGTH(first_name) AS Name_Length
+FROM Student;
+
+-- 20. Show final tables and data
+SHOW TABLES;
+SELECT * FROM Student;
+SELECT * FROM Course;
+SELECT * FROM Enrollment;
