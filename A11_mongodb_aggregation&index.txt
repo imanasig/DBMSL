@@ -1,0 +1,77 @@
+//  STEP 1: Select or Create Database 
+use customerDB
+show dbs
+
+//  STEP 2: Create Collection 
+db.createCollection("cust_table")
+show collections
+
+//  STEP 3: Insert Sample Documents 
+db.cust_table.insertMany([
+  { Item_id: 1, Cust_Name: "Ram", Product: "Milk", Amount: 40 },
+  { Item_id: 2, Cust_Name: "Ram", Product: "Parle-G", Amount: 50 },
+  { Item_id: 3, Cust_Name: "Mohan", Product: "Lays Chips", Amount: 40 },
+  { Item_id: 4, Cust_Name: "Shivam", Product: "Mentos", Amount: 10 },
+  { Item_id: 5, Cust_Name: "Mohan", Product: "Maggie", Amount: 60 }
+])
+
+print("----- INITIAL CUSTOMER PURCHASE RECORDS -----")
+db.cust_table.find().pretty()
+
+//  STEP 4: AGGREGATION QUERIES 
+
+// 4.1 Total Amount Spent by Each Customer
+print("----- TOTAL AMOUNT SPENT BY EACH CUSTOMER -----")
+db.cust_table.aggregate([
+  { $group: { _id: "$Cust_Name", Total_Spent: { $sum: "$Amount" } } }
+])
+
+// 4.2 Average Amount Spent by Each Customer
+print("----- AVERAGE AMOUNT SPENT BY EACH CUSTOMER -----")
+db.cust_table.aggregate([
+  { $group: { _id: "$Cust_Name", Avg_Spent: { $avg: "$Amount" } } }
+])
+
+// 4.3 Minimum Purchase Amount per Customer
+print("----- MINIMUM PURCHASE AMOUNT PER CUSTOMER -----")
+db.cust_table.aggregate([
+  { $group: { _id: "$Cust_Name", Min_Amount: { $min: "$Amount" } } }
+])
+
+// 4.4 Maximum Purchase Amount per Customer
+print("----- MAXIMUM PURCHASE AMOUNT PER CUSTOMER -----")
+db.cust_table.aggregate([
+  { $group: { _id: "$Cust_Name", Max_Amount: { $max: "$Amount" } } }
+])
+
+// 4.5 List of All Amounts per Customer
+print("----- ALL AMOUNT VALUES PER CUSTOMER -----")
+db.cust_table.aggregate([
+  { $group: { _id: "$Cust_Name", All_Amounts: { $push: "$Amount" } } }
+])
+
+// 4.6 Unique Amount Values per Customer
+print("----- UNIQUE AMOUNT VALUES PER CUSTOMER -----")
+db.cust_table.aggregate([
+  { $group: { _id: "$Cust_Name", Unique_Amounts: { $addToSet: "$Amount" } } }
+])
+
+//  STEP 5: INDEXING 
+
+// 5.1 Create Index on 'Item_id'
+db.cust_table.createIndex({ Item_id: 1 })
+print("----- INDEXES CREATED -----")
+printjson(db.cust_table.getIndexes())
+
+// 5.2 Example Search Using Index
+print("----- SEARCH USING INDEX (Item_id = 3) -----")
+db.cust_table.find({ Item_id: 3 }).pretty()
+
+// 5.3 Drop the Index
+db.cust_table.dropIndex({ Item_id: 1 })
+print("----- INDEX DROPPED -----")
+printjson(db.cust_table.getIndexes())
+
+// STEP 6: FINAL DISPLAY 
+print("----- FINAL CUSTOMER TABLE -----")
+db.cust_table.find().pretty()
