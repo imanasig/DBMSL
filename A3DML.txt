@@ -6,16 +6,16 @@ sudo apt install mysql-server
 sudo systemctl start mysql
 sudo mysql -u root -p
 
-/* ==========================================
-   ASSIGNMENT 3 – SQL Joins, Subqueries, Views Works on MySQL / Ubuntu terminal
-   ========================================== */
+-- ==========================================
+-- ASSIGNMENT 3 – SQL Joins, Subqueries, Views Works on MySQL / Ubuntu terminal
+-- ==========================================
 
-DROP DATABASE IF EXISTS lab_assignment3;
+-- 1️⃣ Drop old database if exists and create new
+DROP DATABASE lab_assignment3;
 CREATE DATABASE lab_assignment3;
 USE lab_assignment3;
 
-/* ---------- SCHEMA SETUP ---------- */
-
+-- ---------- SCHEMA SETUP ----------
 CREATE TABLE Student (
     student_id INT AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(50),
@@ -33,12 +33,12 @@ CREATE TABLE Enrollment (
     enroll_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT,
     course_id INT,
-    enroll_date DATE DEFAULT (CURRENT_DATE),
+    enroll_date DATE DEFAULT CURRENT_DATE,
     FOREIGN KEY (student_id) REFERENCES Student(student_id),
     FOREIGN KEY (course_id) REFERENCES Course(course_id)
 );
 
-/* ---------- SAMPLE DATA ---------- */
+-- ---------- SAMPLE DATA ----------
 INSERT INTO Student (first_name, department, marks) VALUES
 ('Amit','CSE',88.5),
 ('Riya','IT',76.0),
@@ -55,50 +55,49 @@ INSERT INTO Course (course_name, credits) VALUES
 INSERT INTO Enrollment (student_id, course_id) VALUES
 (1,1),(1,4),(2,3),(3,2),(4,1),(5,4);
 
+-- ---------- SHOW INITIAL DATA ----------
 SELECT * FROM Student;
 SELECT * FROM Course;
 SELECT * FROM Enrollment;
 
-/* ==========================================
-   10+ SQL QUERIES – JOINS, SUBQUERIES, VIEWS
-   ========================================== */
+-- 10+ SQL QUERIES – JOINS, SUBQUERIES, VIEWS
 
-/* 1️⃣ INNER JOIN – Students with their Courses */
+-- 1️⃣ INNER JOIN – Students with their Courses
 SELECT s.first_name, c.course_name, c.credits
 FROM Student s
 INNER JOIN Enrollment e ON s.student_id = e.student_id
 INNER JOIN Course c ON e.course_id = c.course_id;
 
-/* 2️⃣ LEFT JOIN – All Students, even if not enrolled */
+-- 2️⃣ LEFT JOIN – All Students, even if not enrolled
 SELECT s.first_name, c.course_name
 FROM Student s
 LEFT JOIN Enrollment e ON s.student_id = e.student_id
 LEFT JOIN Course c ON e.course_id = c.course_id;
 
-/* 3️⃣ RIGHT JOIN – All Courses, even if no student enrolled */
+-- 3️⃣ RIGHT JOIN – All Courses, even if no student enrolled
 SELECT s.first_name, c.course_name
 FROM Student s
 RIGHT JOIN Enrollment e ON s.student_id = e.student_id
 RIGHT JOIN Course c ON e.course_id = c.course_id;
 
-/* 4️⃣ CROSS JOIN – Cartesian combination (limited with WHERE) */
+-- 4️⃣ CROSS JOIN – Cartesian combination (limited with WHERE)
 SELECT s.first_name, c.course_name
 FROM Student s
 CROSS JOIN Course c
 WHERE s.department = 'CSE';
 
-/* 5️⃣ SELF JOIN – Compare students within same department */
+-- 5️⃣ SELF JOIN – Compare students within same department
 SELECT a.first_name AS Student1, b.first_name AS Student2, a.department
 FROM Student a
 JOIN Student b
 ON a.department = b.department AND a.student_id < b.student_id;
 
-/* 6️⃣ SUBQUERY – Students scoring above class average */
+-- 6️⃣ SUBQUERY – Students scoring above class average
 SELECT first_name, marks
 FROM Student
 WHERE marks > (SELECT AVG(marks) FROM Student);
 
-/* 7️⃣ SUBQUERY (IN operator) – Students enrolled in AI course */
+-- 7️⃣ SUBQUERY (IN operator) – Students enrolled in AI course
 SELECT first_name
 FROM Student
 WHERE student_id IN (
@@ -108,7 +107,7 @@ WHERE student_id IN (
     WHERE c.course_name = 'AI Fundamentals'
 );
 
-/* 8️⃣ CORRELATED SUBQUERY – Top student in each department */
+-- 8️⃣ CORRELATED SUBQUERY – Top student in each department
 SELECT s1.first_name, s1.department, s1.marks
 FROM Student s1
 WHERE s1.marks = (
@@ -117,7 +116,7 @@ WHERE s1.marks = (
     WHERE s2.department = s1.department
 );
 
-/* 9️⃣ SUBQUERY in FROM clause – Department-wise average */
+-- 9️⃣ SUBQUERY in FROM clause – Department-wise average
 SELECT department, ROUND(avg_marks,2)
 FROM (
     SELECT department, AVG(marks) AS avg_marks
@@ -125,16 +124,18 @@ FROM (
     GROUP BY department
 ) AS dept_avg;
 
-/* 🔟 VIEW – Create a view for high scorers */
-CREATE OR REPLACE VIEW HighScorers AS
+-- 🔟 VIEW – Create a view for high scorers
+DROP VIEW IF EXISTS HighScorers;
+CREATE VIEW HighScorers AS
 SELECT first_name, department, marks
 FROM Student
 WHERE marks > 80;
 
 SELECT * FROM HighScorers;
 
-/* 1️⃣1️⃣ VIEW + JOIN – Combine student + course info */
-CREATE OR REPLACE VIEW StudentCourseView AS
+-- 1️⃣1️⃣ VIEW + JOIN – Combine student + course info
+DROP VIEW IF EXISTS StudentCourseView;
+CREATE VIEW StudentCourseView AS
 SELECT s.first_name, s.department, c.course_name
 FROM Student s
 JOIN Enrollment e ON s.student_id = e.student_id
@@ -142,11 +143,15 @@ JOIN Course c ON e.course_id = c.course_id;
 
 SELECT * FROM StudentCourseView;
 
-/* 1️⃣2️⃣ UPDATE via VIEW (allowed in MySQL if single table) */
+-- 1️⃣2️⃣ UPDATE via VIEW (allowed in MySQL if single table)
 UPDATE HighScorers
 SET marks = marks + 2
 WHERE department = 'CSE';
 
+SELECT * FROM HighScorers;
+
+-- ---------- CHECK ALL VIEWS ----------
+SHOW FULL TABLES WHERE TABLE_TYPE='VIEW';
 SELECT * FROM HighScorers;
 
 /* ---------- CHECK ALL VIEWS ---------- */
