@@ -1,0 +1,55 @@
+// STEP 1: Select or Create Database
+use bookDB
+show dbs
+
+// STEP 2: Create Collection 
+db.createCollection("library")
+show collections
+
+// STEP 3: Insert Documents (CREATE) 
+db.library.insertMany([
+  { bid: 1, name: "C++", author: "Balagurusamy", cost: 400 },
+  { bid: 2, name: "SEPM", author: "Pressman", cost: 550 },
+  { bid: 3, name: "CN", author: "Forouzan", cost: 700 },
+  { bid: 4, name: "SPOS", author: "Pearson", cost: 500 }
+])
+
+// STEP 4: Display All Documents (READ) 
+print("----- INITIAL RECORDS -----")
+db.library.find().pretty()
+
+//STEP 5: DELETE one record 
+db.library.deleteOne({ bid: 1 })
+print("----- AFTER DELETING book_id = 1 -----")
+db.library.find().pretty()
+
+//STEP 6: COUNT total documents
+print("Total Records: ", db.library.countDocuments())
+
+// STEP 7: UPDATE operation 
+db.library.updateOne({ bid: 4 }, { $set: { cost: 600 } })
+print("----- AFTER UPDATING cost of book_id = 4 -----")
+db.library.find().pretty()
+
+//STEP 8: INSERT a new document ===================
+db.library.insertOne({ bid: 5, name: "AI", author: "McGraw Hill", cost: 800 })
+print("----- AFTER INSERTING NEW BOOK -----")
+db.library.find().pretty()
+
+//  STEP 9: SORT documents ===================
+print("----- SORTED BY book_id -----")
+db.library.find().sort({ bid: 1 }).pretty()
+
+//  STEP 10: LOGICAL OPERATOR QUERIES 
+print("Books with cost 500 OR 800")
+db.library.find({ $or: [ { cost: 500 }, { cost: 800 } ] }).pretty()
+
+print("Books with cost NOT EQUAL to 500")
+db.library.find({ cost: { $ne: 500 } }).pretty()
+
+print("Books with cost NOT greater than 800")
+db.library.find({ cost: { $not: { $gt: 800 } } }).pretty()
+
+//  STEP 11: FINAL DISPLAY 
+print("----- FINAL LIBRARY RECORDS -----")
+db.library.find().pretty()
