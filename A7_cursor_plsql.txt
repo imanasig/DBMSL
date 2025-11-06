@@ -1,0 +1,108 @@
+Cursors: (All types: Implicit, Explicit, Cursor FOR Loop, Parameterized Cursor). Write a PL/SQL block of code using parameterized Cursor that will merge the data available in the newly created table N_RollCall with 
+the data available in the table O_RollCall. If the data in the first table already exist in the second table then that data should be skipped.
+-- ✅ Assignment 6: Parameterized Cursor - Merging N_RollCall into O_RollCall, Fully runnable in OneCompiler Oracle PL/SQL environment
+
+-- Drop existing tables for re-run
+BEGIN
+  EXECUTE IMMEDIATE 'DROP TABLE N_RollCall';
+  EXECUTE IMMEDIATE 'DROP TABLE O_RollCall';
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END;
+/
+
+-- 1️⃣ Create tables
+CREATE TABLE O_RollCall (
+  Roll_no NUMBER(5) PRIMARY KEY,
+  Name    VARCHAR2(50),
+  Branch  VARCHAR2(20)
+);
+
+CREATE TABLE N_RollCall (
+  Roll_no NUMBER(5),
+  Name    VARCHAR2(50),
+  Branch  VARCHAR2(20)
+);
+
+-- 2️⃣ Insert sample data
+-- Old (existing) RollCall data
+INSERT INTO O_RollCall VALUES (101, 'Manasi', 'Computer');
+INSERT INTO O_RollCall VALUES (102, 'Riya', 'IT');
+INSERT INTO O_RollCall VALUES (103, 'Aarav', 'Mechanical');
+
+-- New (to be merged) RollCall data
+INSERT INTO N_RollCall VALUES (102, 'Riya', 'IT');
+INSERT INTO N_RollCall VALUES (104, 'Kabir', 'ENTC');
+INSERT INTO N_RollCall VALUES (105, 'Anaya', 'Computer');
+COMMIT;
+
+-- 3️⃣ Main PL/SQL block using Parameterized Cursor
+SET SERVEROUTPUT ON;
+DECLARE
+  CURSOR cur_new(p_branch VARCHAR2) IS
+    SELECT Roll_no, Name, Branch
+    FROM N_RollCall
+    WHERE Branch = p_branch;
+
+  v_exist NUMBER;
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('Merging records branch-wise...');
+  DBMS_OUTPUT.PUT_LINE('--------------------------------');
+
+  -- Process "Computer" branch
+  FOR rec IN cur_new('Computer') LOOP
+    SELECT COUNT(*) INTO v_exist
+    FROM O_RollCall
+    WHERE Roll_no = rec.Roll_no;
+
+    IF v_exist = 0 THEN
+      INSERT INTO O_RollCall VALUES (rec.Roll_no, rec.Name, rec.Branch);
+      DBMS_OUTPUT.PUT_LINE('Inserted: ' || rec.Roll_no || ' - ' || rec.Name);
+    ELSE
+      DBMS_OUTPUT.PUT_LINE('Skipped (duplicate): ' || rec.Roll_no || ' - ' || rec.Name);
+    END IF;
+  END LOOP;
+
+  -- Process "ENTC" branch
+  FOR rec IN cur_new('ENTC') LOOP
+    SELECT COUNT(*) INTO v_exist
+    FROM O_RollCall
+    WHERE Roll_no = rec.Roll_no;
+
+    IF v_exist = 0 THEN
+      INSERT INTO O_RollCall VALUES (rec.Roll_no, rec.Name, rec.Branch);
+      DBMS_OUTPUT.PUT_LINE('Inserted: ' || rec.Roll_no || ' - ' || rec.Name);
+    ELSE
+      DBMS_OUTPUT.PUT_LINE('Skipped (duplicate): ' || rec.Roll_no || ' - ' || rec.Name);
+    END IF;
+  END LOOP;
+
+  -- Process "IT" branch
+  FOR rec IN cur_new('IT') LOOP
+    SELECT COUNT(*) INTO v_exist
+    FROM O_RollCall
+    WHERE Roll_no = rec.Roll_no;
+
+    IF v_exist = 0 THEN
+      INSERT INTO O_RollCall VALUES (rec.Roll_no, rec.Name, rec.Branch);
+      DBMS_OUTPUT.PUT_LINE('Inserted: ' || rec.Roll_no || ' - ' || rec.Name);
+    ELSE
+      DBMS_OUTPUT.PUT_LINE('Skipped (duplicate): ' || rec.Roll_no || ' - ' || rec.Name);
+    END IF;
+  END LOOP;
+
+  COMMIT;
+
+  DBMS_OUTPUT.PUT_LINE(CHR(10) || '✅ Merge Completed Successfully!');
+
+  -- 4️⃣ Display Final Merged Table
+  DBMS_OUTPUT.PUT_LINE(CHR(10) || '--- FINAL O_RollCall TABLE ---');
+  DBMS_OUTPUT.PUT_LINE('Roll_no | Name      | Branch');
+  DBMS_OUTPUT.PUT_LINE('--------------------------------');
+  FOR rec IN (SELECT * FROM O_RollCall ORDER BY Roll_no) LOOP
+    DBMS_OUTPUT.PUT_LINE(rec.Roll_no || ' | ' ||
+                         RPAD(rec.Name,10) || ' | ' ||
+                         rec.Branch);
+  END LOOP;
+END;
+/
