@@ -1,0 +1,82 @@
+-- 1️⃣ Drop tables if they exist
+DROP TABLE IF EXISTS N_RollCall;
+DROP TABLE IF EXISTS O_RollCall;
+
+-- 2️⃣ Create tables
+CREATE TABLE O_RollCall (
+    Roll_no INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Branch VARCHAR(20)
+);
+
+CREATE TABLE N_RollCall (
+    Roll_no INT,
+    Name VARCHAR(50),
+    Branch VARCHAR(20)
+);
+
+-- 3️⃣ Insert sample data
+-- Old RollCall
+INSERT INTO O_RollCall VALUES
+(101, 'Manasi', 'Computer'),
+(102, 'Riya', 'IT'),
+(103, 'Aarav', 'Mechanical');
+
+-- New RollCall to merge
+INSERT INTO N_RollCall VALUES
+(102, 'Riya', 'IT'),
+(104, 'Kabir', 'ENTC'),
+(105, 'Anaya', 'Computer');
+
+-- 4️⃣ Stored Procedure to merge data using a "parameterized cursor"
+DELIMITER $$
+
+CREATE PROCEDURE merge_rollcall(IN p_branch VARCHAR(20))
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE v_roll INT;
+    DECLARE v_name VARCHAR(50);
+    DECLARE v_branch VARCHAR(20);
+    DECLARE v_exist INT;
+
+    -- Cursor for new rollcall filtered by branch
+    DECLARE cur CURSOR FOR
+        SELECT Roll_no, Name, Branch
+        FROM N_RollCall
+        WHERE Branch = p_branch;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    OPEN cur;
+
+    read_loop: LOOP
+        FETCH cur INTO v_roll, v_name, v_branch;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Check if already exists in O_RollCall
+        SELECT COUNT(*) INTO v_exist
+        FROM O_RollCall
+        WHERE Roll_no = v_roll;
+
+        IF v_exist = 0 THEN
+            INSERT INTO O_RollCall VALUES (v_roll, v_name, v_branch);
+            SELECT CONCAT('Inserted: ', v_roll, ' - ', v_name) AS info;
+        ELSE
+            SELECT CONCAT('Skipped (duplicate): ', v_roll, ' - ', v_name) AS info;
+        END IF;
+    END LOOP;
+
+    CLOSE cur;
+END$$
+
+DELIMITER ;
+
+-- 5️⃣ Call the procedure branch-wise
+CALL merge_rollcall('Computer');
+CALL merge_rollcall('ENTC');
+CALL merge_rollcall('IT');
+
+-- 6️⃣ Display final merged table
+SELECT * FROM O_RollCall ORDER BY Roll_no;
