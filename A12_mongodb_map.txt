@@ -1,0 +1,46 @@
+//  MongoDB MapReduce Example 
+
+// Step 1: Select or Create Database and Insert Sample Documents
+use shopDB
+db.sales.insertMany([
+  { _id: 1, product: "Milk",  quantity: 2,  price: 25 },
+  { _id: 2, product: "Bread", quantity: 1,  price: 20 },
+  { _id: 3, product: "Milk",  quantity: 3,  price: 25 },
+  { _id: 4, product: "Eggs",  quantity: 12, price: 5  },
+  { _id: 5, product: "Bread", quantity: 2,  price: 20 },
+  { _id: 6, product: "Milk",  quantity: 1,  price: 25 }
+])
+
+print("----- INITIAL SALES RECORDS -----")
+db.sales.find().pretty()
+
+// Step 2: Define the Map Function
+var mapFunction = function() {
+  var total = this.quantity * this.price;
+  emit(this.product, total);
+};
+
+// Step 3: Define the Reduce Function
+var reduceFunction = function(key, values) {
+  return Array.sum(values);
+};
+
+// Step 4: Execute MapReduce
+db.sales.mapReduce(
+  mapFunction,
+  reduceFunction,
+  { out: "total_sales" }
+);
+
+// Step 5: Display the Result
+print("----- TOTAL SALES PER PRODUCT -----")
+db.total_sales.find().pretty();
+
+// Step 6: Verify Output Collection Exists
+print("----- OUTPUT COLLECTIONS IN shopDB -----")
+show collections
+ 
+// 📊 Expected Output:
+// { "_id": "Bread", "value": 60 }
+// { "_id": "Eggs",  "value": 60 }
+// { "_id": "Milk",  "value": 150 }
