@@ -1,0 +1,84 @@
+-- Drop tables if exist
+DROP TABLE IF EXISTS Stud_Marks;
+DROP TABLE IF EXISTS Result;
+
+-- 1️⃣ Create tables
+CREATE TABLE Stud_Marks (
+    Roll_no INT,
+    Name VARCHAR(50),
+    Total_Marks INT
+);
+
+CREATE TABLE Result (
+    Roll_no INT,
+    Name VARCHAR(50),
+    Class VARCHAR(30)
+);
+
+-- 2️⃣ Insert sample data
+INSERT INTO Stud_Marks VALUES 
+(101, 'Manasi', 1200),
+(102, 'Riya', 950),
+(103, 'Aarav', 860),
+(104, 'Kabir', 780),
+(105, 'Anaya', 1400);
+
+-- 3️⃣ Create stored function to determine grade
+DELIMITER $$
+
+CREATE FUNCTION get_grade(marks INT) RETURNS VARCHAR(30)
+DETERMINISTIC
+BEGIN
+    DECLARE v_class VARCHAR(30);
+
+    IF marks BETWEEN 990 AND 1500 THEN
+        SET v_class = 'Distinction';
+    ELSEIF marks BETWEEN 900 AND 989 THEN
+        SET v_class = 'First Class';
+    ELSEIF marks BETWEEN 825 AND 899 THEN
+        SET v_class = 'Higher Second Class';
+    ELSE
+        SET v_class = 'Fail';
+    END IF;
+
+    RETURN v_class;
+END$$
+
+DELIMITER ;
+
+-- 4️⃣ Create stored procedure to populate Result table
+DELIMITER $$
+
+CREATE PROCEDURE proc_grade()
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE v_roll INT;
+    DECLARE v_name VARCHAR(50);
+    DECLARE v_marks INT;
+
+    DECLARE cur CURSOR FOR SELECT Roll_no, Name, Total_Marks FROM Stud_Marks;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    OPEN cur;
+
+    read_loop: LOOP
+        FETCH cur INTO v_roll, v_name, v_marks;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        INSERT INTO Result (Roll_no, Name, Class)
+        VALUES (v_roll, v_name, get_grade(v_marks));
+    END LOOP;
+
+    CLOSE cur;
+END$$
+
+DELIMITER ;
+
+-- 5️⃣ Call the procedure to populate Result table
+CALL proc_grade();
+
+-- 6️⃣ Display tables
+SELECT * FROM Stud_Marks;
+SELECT * FROM Result;
