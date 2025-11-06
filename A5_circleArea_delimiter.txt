@@ -1,0 +1,33 @@
+-- Drop table if exists
+DROP TABLE IF EXISTS areas;
+
+-- Create table to store radius and area
+CREATE TABLE areas (
+  radius INT,
+  area DECIMAL(10,2)
+);
+
+-- Change delimiter to define procedure
+DELIMITER $$
+
+-- Create procedure to calculate area
+CREATE PROCEDURE CalculateCircleAreas()
+BEGIN
+    DECLARE r INT DEFAULT 5;
+    DECLARE a DECIMAL(10,2);
+    DECLARE pi DECIMAL(6,5) DEFAULT 3.14159;
+
+    WHILE r <= 9 DO
+        SET a = pi * r * r;  -- calculate area
+        INSERT INTO areas (radius, area) VALUES (r, a);
+        SET r = r + 1;
+    END WHILE;
+END$$
+
+DELIMITER ;
+
+-- Call the procedure
+CALL CalculateCircleAreas();
+
+-- Display results
+SELECT * FROM areas;
