@@ -1,0 +1,89 @@
+5. Named PL/SQL Block: PL/SQL Stored Procedure and Stored Function. Write a Stored Procedure namely proc_Grade for the categorization of student. If marks scored by students in examination is <=1500 and marks>=990
+then student will be placed in distinction category if marks scored are between 989 and 900 category is first class, if marks 899 and 825 category is Higher Second Class.
+Write a PL/SQL block to use procedure created with above requirement. Stud_Marks(name, total_marks) Result(Roll,Name, Class)
+-- ✅ Assignment 5: Stored Procedure and Stored Function, Fully runnable in OneCompiler Oracle PL/SQL environment
+
+-- Drop tables for safe re-runs
+BEGIN
+  EXECUTE IMMEDIATE 'DROP TABLE Result';
+  EXECUTE IMMEDIATE 'DROP TABLE Stud_Marks';
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END;
+/
+
+-- 1️⃣ Create tables
+CREATE TABLE Stud_Marks (
+  Roll_no     NUMBER(5),
+  Name        VARCHAR2(50),
+  Total_Marks NUMBER(5)
+);
+
+CREATE TABLE Result (
+  Roll_no NUMBER(5),
+  Name    VARCHAR2(50),
+  Class   VARCHAR2(30)
+);
+
+-- 2️⃣ Insert sample data
+INSERT INTO Stud_Marks VALUES (101, 'Manasi', 1200);
+INSERT INTO Stud_Marks VALUES (102, 'Riya', 950);
+INSERT INTO Stud_Marks VALUES (103, 'Aarav', 860);
+INSERT INTO Stud_Marks VALUES (104, 'Kabir', 780);
+INSERT INTO Stud_Marks VALUES (105, 'Anaya', 1400);
+COMMIT;
+
+-- 3️⃣ Stored Function to determine grade category
+CREATE OR REPLACE FUNCTION get_grade(marks NUMBER)
+RETURN VARCHAR2 IS
+  v_class VARCHAR2(30);
+BEGIN
+  IF marks BETWEEN 990 AND 1500 THEN
+    v_class := 'Distinction';
+  ELSIF marks BETWEEN 900 AND 989 THEN
+    v_class := 'First Class';
+  ELSIF marks BETWEEN 825 AND 899 THEN
+    v_class := 'Higher Second Class';
+  ELSE
+    v_class := 'Fail';
+  END IF;
+  RETURN v_class;
+END;
+/
+
+-- 4️⃣ Stored Procedure that uses the function internally
+CREATE OR REPLACE PROCEDURE proc_grade IS
+BEGIN
+  FOR rec IN (SELECT * FROM Stud_Marks) LOOP
+    INSERT INTO Result
+    VALUES (rec.Roll_no, rec.Name, get_grade(rec.Total_Marks));
+  END LOOP;
+  COMMIT;
+END;
+/
+
+-- 5️⃣ Main PL/SQL block to execute everything and show results
+SET SERVEROUTPUT ON;
+BEGIN
+  DELETE FROM Result;
+  proc_grade;
+
+  DBMS_OUTPUT.PUT_LINE('--- STUDENT MARKS TABLE ---');
+  DBMS_OUTPUT.PUT_LINE('Roll_no | Name      | Total_Marks');
+  DBMS_OUTPUT.PUT_LINE('---------------------------------');
+  FOR rec IN (SELECT * FROM Stud_Marks ORDER BY Roll_no) LOOP
+    DBMS_OUTPUT.PUT_LINE(rec.Roll_no || ' | ' ||
+                         RPAD(rec.Name,10) || ' | ' ||
+                         rec.Total_Marks);
+  END LOOP;
+
+  DBMS_OUTPUT.PUT_LINE(CHR(10) || '--- RESULT TABLE ---');
+  DBMS_OUTPUT.PUT_LINE('Roll_no | Name      | Class');
+  DBMS_OUTPUT.PUT_LINE('-----------------------------');
+  FOR rec IN (SELECT * FROM Result ORDER BY Roll_no) LOOP
+    DBMS_OUTPUT.PUT_LINE(rec.Roll_no || ' | ' ||
+                         RPAD(rec.Name,10) || ' | ' ||
+                         rec.Class);
+  END LOOP;
+END;
+/
