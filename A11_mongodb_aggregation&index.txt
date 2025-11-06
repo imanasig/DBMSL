@@ -1,77 +1,69 @@
-//  STEP 1: Select or Create Database 
-use customerDB
-show dbs
+🗂️ Database Name: collegeDB
+📘 Collection: students
 
-//  STEP 2: Create Collection 
-db.createCollection("cust_table")
-show collections
+🧩 Step 1: Create & Insert Documents
+use collegeDB
 
-//  STEP 3: Insert Sample Documents 
-db.cust_table.insertMany([
-  { Item_id: 1, Cust_Name: "Ram", Product: "Milk", Amount: 40 },
-  { Item_id: 2, Cust_Name: "Ram", Product: "Parle-G", Amount: 50 },
-  { Item_id: 3, Cust_Name: "Mohan", Product: "Lays Chips", Amount: 40 },
-  { Item_id: 4, Cust_Name: "Shivam", Product: "Mentos", Amount: 10 },
-  { Item_id: 5, Cust_Name: "Mohan", Product: "Maggie", Amount: 60 }
+db.students.insertMany([
+  { _id: 1, name: "Ram",   dept: "CSE", marks: 85, city: "Pune" },
+  { _id: 2, name: "Soham", dept: "CSE", marks: 92, city: "Pune" },
+  { _id: 3, name: "Mohan", dept: "IT",  marks: 76, city: "Mumbai" },
+  { _id: 4, name: "Om",    dept: "ENTC", marks: 68, city: "Nashik" },
+  { _id: 5, name: "Asha",  dept: "IT",  marks: 90, city: "Pune" },
+  { _id: 6, name: "Sneha", dept: "CSE", marks: 82, city: "Nashik" }
 ])
 
-print("----- INITIAL CUSTOMER PURCHASE RECORDS -----")
-db.cust_table.find().pretty()
+⚙️ Part 1: Aggregation Queries
 
-//  STEP 4: AGGREGATION QUERIES 
+Aggregation is used for grouping, filtering, and performing calculations (like SUM, AVG, COUNT).
 
-// 4.1 Total Amount Spent by Each Customer
-print("----- TOTAL AMOUNT SPENT BY EACH CUSTOMER -----")
-db.cust_table.aggregate([
-  { $group: { _id: "$Cust_Name", Total_Spent: { $sum: "$Amount" } } }
+① Group by Department and Find Average Marks
+db.students.aggregate([
+  { $group: { _id: "$dept", avgMarks: { $avg: "$marks" } } }
 ])
 
-// 4.2 Average Amount Spent by Each Customer
-print("----- AVERAGE AMOUNT SPENT BY EACH CUSTOMER -----")
-db.cust_table.aggregate([
-  { $group: { _id: "$Cust_Name", Avg_Spent: { $avg: "$Amount" } } }
+
+📊 Output:
+
+{ "_id": "CSE", "avgMarks": 86.33 }
+{ "_id": "IT", "avgMarks": 83 }
+{ "_id": "ENTC", "avgMarks": 68 }
+
+② Count Students per City
+db.students.aggregate([
+  { $group: { _id: "$city", totalStudents: { $sum: 1 } } }
 ])
 
-// 4.3 Minimum Purchase Amount per Customer
-print("----- MINIMUM PURCHASE AMOUNT PER CUSTOMER -----")
-db.cust_table.aggregate([
-  { $group: { _id: "$Cust_Name", Min_Amount: { $min: "$Amount" } } }
+③ Find Top Performing Students (marks > 85)
+db.students.aggregate([
+  { $match: { marks: { $gt: 85 } } },
+  { $project: { name: 1, dept: 1, marks: 1, _id: 0 } }
 ])
 
-// 4.4 Maximum Purchase Amount per Customer
-print("----- MAXIMUM PURCHASE AMOUNT PER CUSTOMER -----")
-db.cust_table.aggregate([
-  { $group: { _id: "$Cust_Name", Max_Amount: { $max: "$Amount" } } }
+④ Department-Wise Highest Marks
+db.students.aggregate([
+  { $group: { _id: "$dept", maxMarks: { $max: "$marks" } } }
 ])
 
-// 4.5 List of All Amounts per Customer
-print("----- ALL AMOUNT VALUES PER CUSTOMER -----")
-db.cust_table.aggregate([
-  { $group: { _id: "$Cust_Name", All_Amounts: { $push: "$Amount" } } }
-])
+⚡ Part 2: Indexing
 
-// 4.6 Unique Amount Values per Customer
-print("----- UNIQUE AMOUNT VALUES PER CUSTOMER -----")
-db.cust_table.aggregate([
-  { $group: { _id: "$Cust_Name", Unique_Amounts: { $addToSet: "$Amount" } } }
-])
+Indexes improve the search speed of queries.
 
-//  STEP 5: INDEXING 
+① Create an Index on Department
+db.students.createIndex({ dept: 1 })
 
-// 5.1 Create Index on 'Item_id'
-db.cust_table.createIndex({ Item_id: 1 })
-print("----- INDEXES CREATED -----")
-printjson(db.cust_table.getIndexes())
 
-// 5.2 Example Search Using Index
-print("----- SEARCH USING INDEX (Item_id = 3) -----")
-db.cust_table.find({ Item_id: 3 }).pretty()
+✅ 1 means ascending order.
+Now MongoDB will quickly search/filter by dept.
 
-// 5.3 Drop the Index
-db.cust_table.dropIndex({ Item_id: 1 })
-print("----- INDEX DROPPED -----")
-printjson(db.cust_table.getIndexes())
+② Create a Compound Index (on dept and marks)
+db.students.createIndex({ dept: 1, marks: -1 })
 
-// STEP 6: FINAL DISPLAY 
-print("----- FINAL CUSTOMER TABLE -----")
-db.cust_table.find().pretty()
+
+✅ -1 means descending order for marks.
+
+③ Check Indexes Created
+db.students.getIndexes()
+
+④ Search Using Indexed Field
+db.students.find({ dept: "CSE" })
