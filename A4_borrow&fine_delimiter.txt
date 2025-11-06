@@ -1,0 +1,93 @@
+-- MySQL Version of Borrower & Fine
+
+-- Drop old tables if they exist
+DROP TABLE IF EXISTS Fine;
+DROP TABLE IF EXISTS Borrower;
+
+-- Create Borrower table
+CREATE TABLE Borrower (
+  Roll_no INT PRIMARY KEY,
+  Name VARCHAR(50),
+  DateOfIssue DATE,
+  NameOfBook VARCHAR(100),
+  Status CHAR(1)
+);
+
+-- Create Fine table
+CREATE TABLE Fine (
+  Roll_no INT,
+  NameOfBook VARCHAR(100),
+  Date_ DATE,
+  Amt DECIMAL(10,2)
+);
+
+-- Insert sample data
+INSERT INTO Borrower VALUES (101, 'Manasi', '2025-10-10', 'Database Systems', 'I');
+INSERT INTO Borrower VALUES (102, 'Riya',   '2025-10-15', 'Operating Systems', 'R');
+INSERT INTO Borrower VALUES (103, 'Aarav',  '2025-10-01', 'Computer Networks', 'I');
+INSERT INTO Borrower VALUES (104, 'Neha',   '2025-09-25', 'AI and ML', 'R');
+
+-- Enable delimiter for procedure
+DELIMITER $$
+
+-- Procedure to calculate fines and update tables
+CREATE PROCEDURE CalculateFines()
+BEGIN
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE v_roll INT;
+    DECLARE v_name VARCHAR(50);
+    DECLARE v_book VARCHAR(100);
+    DECLARE v_date DATE;
+    DECLARE v_status CHAR(1);
+    DECLARE v_days INT;
+    DECLARE v_amt DECIMAL(10,2);
+
+    -- Cursor to loop over Borrowers
+    DECLARE cur1 CURSOR FOR SELECT Roll_no, Name, NameOfBook, DateOfIssue, Status FROM Borrower;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    OPEN cur1;
+    read_loop: LOOP
+        FETCH cur1 INTO v_roll, v_name, v_book, v_date, v_status;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Calculate number of days
+        SET v_days = DATEDIFF(CURDATE(), v_date);
+
+        -- Fine calculation logic
+        IF v_days BETWEEN 15 AND 30 THEN
+            SET v_amt = v_days * 5;
+        ELSEIF v_days > 30 THEN
+            SET v_amt = 30 * 5 + (v_days - 30) * 50;
+        ELSE
+            SET v_amt = 0;
+        END IF;
+
+        -- Insert fine if any
+        IF v_amt > 0 THEN
+            INSERT INTO Fine (Roll_no, NameOfBook, Date_, Amt)
+            VALUES (v_roll, v_book, CURDATE(), v_amt);
+        END IF;
+
+        -- Update status to Returned if issued
+        IF v_status = 'I' THEN
+            UPDATE Borrower SET Status = 'R' WHERE Roll_no = v_roll;
+        END IF;
+
+    END LOOP;
+
+    CLOSE cur1;
+END$$
+
+DELIMITER ;
+
+-- Execute procedure
+CALL CalculateFines();
+
+-- Display Borrower table
+SELECT * FROM Borrower ORDER BY Roll_no;
+
+-- Display Fine table
+SELECT * FROM Fine ORDER BY Roll_no;
