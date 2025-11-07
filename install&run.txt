@@ -37,5 +37,7 @@ Installation for MongoDB
 sudo apt install mongodb-server
 mongo or mongosh
 
+All lab viva
+https://chatgpt.com/share/690c3bd9-b558-8011-afe9-efce2e69bc9d
 
 
